@@ -20,9 +20,9 @@ function run(p, inp) {
   const D = new Int32Array(256);
   const C = new Int32Array(64);
   const M = new Int32Array(256);
-  const out = [];
-  let sp = 0, csp = 0, ip = 0, pc = 0, steps = 0;
-  const done = (code) => ({ out, code });
+  const out = new Uint8Array(65536);
+  let sp = 0, csp = 0, ip = 0, pc = 0, steps = 0, olen = 0;
+  const done = (code) => ({ out: out.slice(0, olen), code });
   for (;;) {
     if (steps === 1e6) return done(10);
     if (pc < 0 || pc >= p.length) return done(9);
@@ -99,14 +99,14 @@ function run(p, inp) {
       }
       case 80: {
         const s = String(D[sp - 1]);
-        if (out.length + s.length > 65536) return done(11);
+        if (olen + s.length > 65536) return done(11);
         sp--;
-        for (const ch of s) out.push(ch.charCodeAt(0));
+        for (let i = 0; i < s.length; i++) out[olen++] = s.charCodeAt(i);
         break;
       }
       case 81:
-        if (out.length + 1 > 65536) return done(11);
-        out.push(D[--sp] & 255);
+        if (olen + 1 > 65536) return done(11);
+        out[olen++] = D[--sp] & 255;
         break;
       case 82:
         D[sp++] = ip < inp.length ? inp[ip++] : -1;
